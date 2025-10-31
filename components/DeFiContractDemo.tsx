@@ -23,7 +23,7 @@ export const DeFiContractDemo = () => {
     initialMockChains,
   } = useMetaMaskEthersSigner();
 
-  const { instance: fhevmInstance, status: fhevmStatus, error: fhevmError } = useFhevm({
+  const { instance: fhevmInstance } = useFhevm({
     provider,
     chainId,
     initialMockChains,
@@ -54,7 +54,6 @@ export const DeFiContractDemo = () => {
     chosenPackage,
     decryptedTotalRepay,
     hasActiveLoan,
-    isRefreshing,
     isDepositing,
     isSubmittingCredit,
     isChoosingPackage,
