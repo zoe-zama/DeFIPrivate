@@ -1,15 +1,14 @@
-
 "use client";
 
 import { useFhevm } from "../fhevm/useFhevm";
 import { useInMemoryStorage } from "../hooks/useInMemoryStorage";
 import { useMetaMaskEthersSigner } from "../hooks/metamask/useMetaMaskEthersSigner";
-import { useSealedBidAuction } from "@/hooks/useSealedBidAuction";
+import { useDeFiContract } from "@/hooks/useDeFiContract";
 import { errorNotDeployed } from "./ErrorNotDeployed";
 import { useState } from "react";
 import { ethers } from "ethers";
 
-export const SealedBidAuctionDemo = () => {
+export const DeFiContractDemo = () => {
   const { storage: fhevmDecryptionSignatureStorage } = useInMemoryStorage();
   const {
     provider,
@@ -34,46 +33,36 @@ export const SealedBidAuctionDemo = () => {
   const {
     contractAddress,
     canGetState,
-    canStartAuction,
-    canSetAuctionItem,
-    canPlaceBid,
-    canEndAuction,
-    canRequestDecryption,
-    canRefund,
-    canResetAuction,
-    canWithdrawProceeds,
-    startAuction,
-    updateAuctionItem,
-    placeBid,
-    endAuction,
-    requestDecryption,
-    refund,
-    resetAuction,
-    withdrawTotalProceeds,
+    canDeposit,
+    canSubmitCredit,
+    canChoosePackage,
+    canRequestBorrow,
+    canRepay,
+    canWithdrawPool,
+    deposit,
+    submitCreditProfile,
+    choosePackage,
+    requestBorrow,
+    repay,
+    withdrawPool,
     refreshState,
     message,
-    auctionItem,
-    startTime,
-    endTime,
-    auctionStarted,
-    auctionEnded,
-    deposit,
-    winner,
-    winningAmount,
-    decryptedTotalWinningAmount,
-    isAdmin,
-    currentTimestamp,
+    lender,
+    actualPool,
+    isLender,
+    creditSubmitted,
+    chosenPackage,
+    decryptedTotalRepay,
+    hasActiveLoan,
     isRefreshing,
-    isStartingAuction,
-    isSettingItem,
-    isPlacingBid,
-    isEndingAuction,
-    isRequestingDecryption,
-    isRefunding,
-    isResettingAuction,
-    isWithdrawingProceeds,
+    isDepositing,
+    isSubmittingCredit,
+    isChoosingPackage,
+    isRequestingBorrow,
+    isRepaying,
+    isWithdrawing,
     isDeployed,
-  } = useSealedBidAuction({
+  } = useDeFiContract({
     instance: fhevmInstance,
     fhevmDecryptionSignatureStorage,
     eip1193Provider: provider,
@@ -84,11 +73,11 @@ export const SealedBidAuctionDemo = () => {
     sameSigner,
   });
 
-
-  const [duration, setDuration] = useState<number>(3600); // Default 1 hour in seconds
-  const [item, setItem] = useState<string>("");
-  const [bidAmount, setBidAmount] = useState<number>(1000000000000000); // Default 0.001 ETH in wei
-  const [depositAmount, setDepositAmount] = useState<number>(1000000000000000); // Default 0.001 ETH in wei
+  const [depositAmount, setDepositAmount] = useState<number>(1000000000000000); // 0.001 ETH in wei
+  const [salary, setSalary] = useState<number>(50000); // Example salary
+  const [creditScore, setCreditScore] = useState<number>(700); // Example credit score
+  const [packageId, setPackageId] = useState<1 | 2 | 3>(1);
+  const [borrowAmount, setBorrowAmount] = useState<number>(500000000000000); // 0.0005 ETH in wei
 
   const buttonClass =
     "inline-flex items-center justify-center rounded-xl bg-black px-4 py-4 font-semibold text-white shadow-sm " +
@@ -117,7 +106,7 @@ export const SealedBidAuctionDemo = () => {
       <div className="col-span-full mx-20 bg-black text-white">
         <p className="font-semibold text-3xl m-5">
           FHEVM React Minimal Template -{" "}
-          <span className="font-mono font-normal text-gray-400">SealedBidAuction.sol</span>
+          <span className="font-mono font-normal text-gray-400">DeFiContract.sol</span>
         </p>
       </div>
       <div className="col-span-full mx-20 mt-4 px-5 pb-4 rounded-lg bg-white border-2 border-black">
@@ -131,21 +120,18 @@ export const SealedBidAuctionDemo = () => {
               : `{ length: ${accounts.length}, [${accounts[0]}, ...] }`
             : "undefined",
         )}
-        {printProperty("SealedBidAuction", contractAddress)}
+        {printProperty("DeFiContract", contractAddress)}
         {printProperty("isDeployed", isDeployed)}
-        {printProperty("Is Admin", isAdmin)}
+        {printProperty("Is Lender", isLender)}
       </div>
       <div className="col-span-full mx-20 px-4 pb-4 rounded-lg bg-white border-2 border-black">
-        <p className={titleClass}>Auction State</p>
-        {printProperty("Auction Item", auctionItem || "Not set")}
-        {printProperty("Auction Started", auctionStarted)}
-        {printProperty("Auction Ended", auctionEnded)}
-        {printProperty("Start Time", startTime ? new Date(startTime * 1000).toLocaleString() : "Not started")}
-        {printProperty("End Time", endTime ? new Date(endTime * 1000).toLocaleString() : "Not started")}
-        {printProperty("Current Timestamp", currentTimestamp ? new Date(currentTimestamp * 1000).toLocaleString() : "N/A")}
-        {printProperty("User Deposit", `${ethers.formatEther(deposit)} ETH`)}
-        {printProperty("Winner", winner === ethers.ZeroAddress ? "Not announced" : winner)}
-        {printProperty("Winning Amount", `${ethers.formatEther(winningAmount)} ETH`)}
+        <p className={titleClass}>Lending State</p>
+        {printProperty("Lender", lender)}
+        {printProperty("Actual Pool", `${ethers.formatEther(actualPool)} ETH`)}
+        {printProperty("Credit Submitted", creditSubmitted)}
+        {printProperty("Chosen Package", chosenPackage)}
+        {printProperty("Decrypted Total Repay", `${ethers.formatEther(decryptedTotalRepay)} ETH`)}
+        {printProperty("Has Active Loan", hasActiveLoan)}
       </div>
       <div className="grid grid-cols-3 mx-20 gap-4">
         <button
@@ -153,108 +139,112 @@ export const SealedBidAuctionDemo = () => {
           disabled={!canGetState}
           onClick={refreshState}
         >
-          {canGetState ? "Refresh State" : "SealedBidAuction is not available"}
+          {canGetState ? "Refresh State" : "DeFiContract is not available"}
         </button>
         <div>
-          <input
-            type="number"
-            placeholder="Duration (seconds)"
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            className="border-2 border-black p-2 rounded mb-2 w-full"
-            disabled={!canStartAuction}
-            min="1"
-          />
-          <button
-            className={buttonClass}
-            disabled={!canStartAuction || duration <= 0}
-            onClick={() => startAuction(duration)}
-          >
-            {canStartAuction ? "Start Auction" : isStartingAuction ? "Starting..." : "Cannot start auction"}
-          </button>
-        </div>
-        <div>
-          <input
-            type="text"
-            placeholder="Auction Item"
-            value={item}
-            onChange={(e) => setItem(e.target.value)}
-            className="border-2 border-black p-2 rounded mb-2 w-full"
-            disabled={!canSetAuctionItem}
-          />
-          <button
-            className={buttonClass}
-            disabled={!canSetAuctionItem || !item}
-            onClick={() => updateAuctionItem(item)}
-          >
-            {canSetAuctionItem ? "Set Auction Item" : isSettingItem ? "Setting..." : "Cannot set item"}
-          </button>
-        </div>
-      </div>
-      <div className="grid grid-cols-3 mx-20 gap-4">
-        <div>
-          <input
-            type="number"
-            placeholder="Bid Amount (wei)"
-            value={bidAmount}
-            onChange={(e) => setBidAmount(Number(e.target.value))}
-            className="border-2 border-black p-2 rounded mb-2 w-full"
-            disabled={!canPlaceBid}
-            min="1"
-          />
+          <label>Deposit:</label>
           <input
             type="number"
             placeholder="Deposit Amount (wei)"
             value={depositAmount}
             onChange={(e) => setDepositAmount(Number(e.target.value))}
             className="border-2 border-black p-2 rounded mb-2 w-full"
-            disabled={!canPlaceBid}
+            disabled={!canDeposit}
             min="1"
           />
           <button
             className={buttonClass}
-            disabled={!canPlaceBid || bidAmount <= 0 || depositAmount <= 0}
-            onClick={() => placeBid(bidAmount, depositAmount)}
+            disabled={!canDeposit || depositAmount <= 0}
+            onClick={() => deposit(depositAmount)}
           >
-            {canPlaceBid ? "Place Bid" : isPlacingBid ? "Placing..." : "Cannot place bid"}
+            {canDeposit ? "Deposit" : isDepositing ? "Depositing..." : "Cannot deposit"}
+          </button>
+        </div>
+        <div>
+          <label>Your salary:</label>
+          <input
+            type="number"
+            placeholder="Salary"
+            value={salary}
+            onChange={(e) => setSalary(Number(e.target.value))}
+            className="border-2 border-black p-2 rounded mb-2 w-full"
+            disabled={!canSubmitCredit}
+            min="1"
+          />
+          <label>Your credit score:</label>
+          <input
+            type="number"
+            placeholder="Credit Score"
+            value={creditScore}
+            onChange={(e) => setCreditScore(Number(e.target.value))}
+            className="border-2 border-black p-2 rounded mb-2 w-full"
+            disabled={!canSubmitCredit}
+            min="1"
+          />
+          <button
+            className={buttonClass}
+            disabled={!canSubmitCredit || salary <= 0 || creditScore <= 0}
+            onClick={() => submitCreditProfile(salary, creditScore)}
+          >
+            {canSubmitCredit ? "Submit Credit" : isSubmittingCredit ? "Submitting..." : "Cannot submit credit"}
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 mx-20 gap-4">
+        <div>
+        <label>Chose package:</label>
+          <select
+            value={packageId}
+            onChange={(e) => setPackageId(Number(e.target.value) as 1 | 2 | 3)}
+            className="border-2 border-black p-2 rounded mb-2 w-full"
+            disabled={!canChoosePackage}
+          >
+            <option value={1}>1 month (6% APR)</option>
+            <option value={2}>6 months (8% APR)</option>
+            <option value={3}>12 months (10% APR)</option>
+          </select>
+          <button
+            className={buttonClass}
+            disabled={!canChoosePackage}
+            onClick={() => choosePackage(packageId)}
+          >
+            {canChoosePackage ? "Choose Package" : isChoosingPackage ? "Choosing..." : "Cannot choose package"}
+          </button>
+        </div>
+        <div>
+        <label>Borrow:</label>
+          <input
+            type="number"
+            placeholder="Borrow Amount (wei)"
+            value={borrowAmount}
+            onChange={(e) => setBorrowAmount(Number(e.target.value))}
+            className="border-2 border-black p-2 rounded mb-2 w-full"
+            disabled={!canRequestBorrow}
+            min="1"
+          />
+          <button
+            className={buttonClass}
+            disabled={!canRequestBorrow || borrowAmount <= 0}
+            onClick={() => requestBorrow(borrowAmount)}
+          >
+            {canRequestBorrow ? "Request Borrow" : isRequestingBorrow ? "Requesting..." : "Cannot request borrow"}
           </button>
         </div>
         <button
           className={buttonClass}
-          disabled={!canEndAuction}
-          onClick={endAuction}
+          disabled={!canRepay}
+          onClick={repay}
         >
-          {canEndAuction ? "End Auction" : isEndingAuction ? "Ending..." : "Cannot end auction"}
-        </button>
-        <button
-          className={buttonClass}
-          disabled={!canRequestDecryption}
-          onClick={requestDecryption}
-        >
-          {canRequestDecryption ? "Request Decryption" : isRequestingDecryption ? "Requesting..." : "Cannot request decryption"}
+          {canRepay ? "Repay Full" : isRepaying ? "Repaying..." : "Cannot repay"}
         </button>
       </div>
       <div className="grid grid-cols-3 mx-20 gap-4">
         <button
           className={buttonClass}
-          disabled={!canRefund}
-          onClick={refund}
+          disabled={!canWithdrawPool}
+          onClick={withdrawPool}
         >
-          {canRefund ? "Refund" : isRefunding ? "Refunding..." : "Cannot refund"}
-        </button>
-        <button
-          className={buttonClass}
-          disabled={!canResetAuction}
-          onClick={resetAuction}
-        >
-          {canResetAuction ? "Reset Auction" : isResettingAuction ? "Resetting..." : "Cannot reset auction"}
-        </button>
-        <button
-          className={buttonClass}
-          disabled={!canWithdrawProceeds}
-          onClick={withdrawTotalProceeds}
-        >
-          {canWithdrawProceeds ? "Withdraw Proceeds" : isWithdrawingProceeds ? "Withdrawing..." : "Cannot withdraw proceeds"}
+          {canWithdrawPool ? "Withdraw Pool" : isWithdrawing ? "Withdrawing..." : "Cannot withdraw"}
         </button>
       </div>
       <div className="col-span-full mx-20 p-4 rounded-lg bg-white border-2 border-black">
@@ -264,7 +254,6 @@ export const SealedBidAuctionDemo = () => {
   );
 };
 
-// printProperty and printBooleanProperty
 function printProperty(name: string, value: unknown) {
   let displayValue: string;
 
